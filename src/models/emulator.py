@@ -27,6 +27,12 @@ class Emulator(nn.Module):
              nn.ReLU(),
              nn.Linear(4*hidden_size, hidden_size),
              ) for _ in range(num_layers)])
+        
+        self.mlps2 = nn.ModuleList([nn.Sequential(
+             nn.Linear(hidden_size, 4*hidden_size),
+             nn.ReLU(),
+             nn.Linear(4*hidden_size, 2*hidden_size),
+             ) for _ in range(num_layers)])
 
         self.mixture_components = nn.Embedding(config.mixture_size, hidden_size)
         self.rnn = nn.LSTM(input_size=hidden_size, hidden_size=hidden_size, num_layers=1, \
@@ -53,6 +59,7 @@ class Emulator(nn.Module):
                 query_proj=self.query_proj, \
                 out_proj=self.out_proj)
         emulated_teacher_states = outputs.f_h_cs
+        emulated_teacher_states = [self.mlps2[l](emulated_teacher_states[l]) for l in range(len(emulated_teacher_states))]
         return emulated_teacher_states
 
     def compute_loss(self, input_ids, teacher_states):

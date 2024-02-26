@@ -22,7 +22,7 @@ class Student(nn.Module):
         self.hidden_size = hidden_size
 
         self.mlps = nn.ModuleList([nn.Sequential(
-                 nn.Linear(hidden_size, 4*hidden_size),
+                 nn.Linear(2*hidden_size, 4*hidden_size),
                  nn.ReLU(),
                  nn.Linear(4*hidden_size, hidden_size),
                  ) for _ in range(num_layers)])

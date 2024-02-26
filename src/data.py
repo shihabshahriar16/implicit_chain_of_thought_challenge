@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 import os
 import copy
+import random
 import torch
 from torch.utils.data import Dataset
 from torch.nn.utils.rnn import pad_sequence
@@ -34,6 +35,8 @@ class CoTDataset(Dataset):
         with open(file_path, encoding="utf-8") as f:
             lines = [line.split('||') for line in f.read().splitlines() if (len(line) > 0 and not line.isspace()
                                                                              and len(line.split('||')) ==2 )]
+        lines = lines[0:2000]
+        
         src_lines, tgt_lines = list(zip(*lines))
         src_lines = list(src_lines)
         tgt_lines = list(tgt_lines)
@@ -43,16 +46,20 @@ class CoTDataset(Dataset):
         edited_sents_all = []
         edited_sents_nocot = []
         for src, tgt in zip(src_lines, tgt_lines):
+            src2 = src_lines[random.randint(0,len(src_lines)-1)]
+            tgt2 = tgt_lines[random.randint(0,len(tgt_lines)-1)]
             #import pdb; pdb.set_trace()
             ans = extract_answer(tgt)
+            ans2 = extract_answer(tgt2)
             cot = extract_cot(tgt)
-            sent = ' {} {} '.format(src, bos_tok) + cot + ' {}'.format(eos_tok)
+            cot2 = extract_cot(tgt2)
+            sent = ' {} , {} {} '.format(src, src2, bos_tok) + cot + ' , ' + cot2 + ' {}'.format(eos_tok)
             edited_sents_cot.append(sent)
-            sent = ' {} {} '.format(src, bos_tok)
+            sent = ' {} , {} {} '.format(src, src2, bos_tok)
             edited_sents_only.append(sent)
-            sent = ' {} {} '.format(src, bos_tok) + cot + ' {} '.format(eos_tok) + ans + ' {}'.format(eos_tok)
+            sent = ' {} , {} {} '.format(src, src2, bos_tok) + cot + ' , ' + cot2 + ' {} '.format(eos_tok) + ans +  ' , ' + ans2 + ' {}'.format(eos_tok)
             edited_sents_all.append(sent)
-            sent = ' {} {} '.format(src, bos_tok) + ans + ' {}'.format(eos_tok)
+            sent = ' {} , {} {} '.format(src, src2, bos_tok) + ans +  ' , ' + ans2 + ' {}'.format(eos_tok)
             edited_sents_nocot.append(sent)
 
         batch_encoding_cot = tokenizer(edited_sents_cot, add_special_tokens=True, truncation=True, max_length=max_length)
