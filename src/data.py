@@ -35,7 +35,7 @@ class CoTDataset(Dataset):
         with open(file_path, encoding="utf-8") as f:
             lines = [line.split('||') for line in f.read().splitlines() if (len(line) > 0 and not line.isspace()
                                                                              and len(line.split('||')) ==2 )]
-        lines = lines[0:2000]
+        lines = lines[0:min(10000,len(lines))]
         
         src_lines, tgt_lines = list(zip(*lines))
         src_lines = list(src_lines)
