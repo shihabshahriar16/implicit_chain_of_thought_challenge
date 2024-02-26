@@ -1,22 +1,20 @@
-# Implicit Chain of Thought Reasoning via Knowledge Distillation
+# Implicit Chain of Thought Reasoning for Two Multiplication Simultaneously Challenge
 
-Here we provide code to reproduce our results.
+## Preamble
 
-## Prerequisites
-
-* [PyTorch](https://pytorch.org/get-started/locally/)
-* [transformers](https://github.com/huggingface/transformers) (`pip install transformers`)
+This repository is an attempt to solve the challenge shown in Figure: 1. The <a href="https://github.com/da03/implicit_chain_of_thought.git">Implicit_CoT</a> training illustration is shown in Figure: 2. The training illustration for the challenge is shown in Figure: 3.
+<div>
+<img src="imgs\challenge.png" alt="challenge" style="height:500px;"/>
+<img src="imgs\training_illustration.png" alt="training_illustration" style="height:500px;"/>
+<img src="imgs\challenge_training_illustration.png" alt="challenge_training_illustration" style="height:500px;"/>
+</div>
 
 ## Datasets & Pretrained Models & Logs
 
 All dataset files and log files during inference are included in this repo, with the exception of large training files maintained under Git LFS. Model checkpoints are stored on Google Drive. The folder containing all checkpoints can be found at [this link](https://drive.google.com/drive/folders/1Sclr5bmLZIUcktCaFAeWRTevRGLUwlC_?usp=drive_link).
 
 * 4 X 4 Mult - GPT-2: [data](data/4_by_4_mult/) [model](https://drive.google.com/drive/folders/1Zp-PFwiHkwq0wuFScjN5R8jDdXdnQYQ_?usp=sharing) [log](logs/4_by_4_mult/gpt2/log.generate)
-* 4 X 4 Mult - GPT-2 Medium: [data](data/4_by_4_mult/) [model](https://drive.google.com/drive/folders/1B0e67ifTSTTuUg0Sh-of5135Rh4KQ-2v?usp=sharing) [log](logs/4_by_4_mult/gpt2-medium/log.generate)
-* 5 X 5 Mult - GPT-2: [data](data/5_by_5_mult/) [model](https://drive.google.com/drive/folders/1lHa2Xey8jJ3__RsYRhcOFHU7Xfqp7XTG?usp=sharing) [log](logs/5_by_5_mult/gpt2/log.generate)
-* 5 X 5 Mult - GPT-2 Medium: [data](data/5_by_5_mult/) [model](https://drive.google.com/drive/folders/18dRIynq0j5EBOnKTpOPaLJWCoMBXZYTi?usp=sharing) [log](logs/5_by_5_mult/gpt2-medium/log.generate)
-* GSM8K - GPT-2: [data](data/5_by_5_mult/) [model](https://drive.google.com/drive/folders/1aFBBcUr_vHtaDqgpU5A1ErEvrJyX-cEO?usp=sharing) [log](logs/gsm8k/gpt2/log.generate)
-* GSM8K - GPT-2 Medium: [data](data/5_by_5_mult/) [model](https://drive.google.com/drive/folders/1zFXfwq5jDjgKpbUVafY5KC0LmJpYXjQK?usp=sharing) [log](logs/gsm8k/gpt2-medium/log.generate)
+
 
 ## Usage
 
@@ -27,23 +25,29 @@ We use 4 X 4 Mult with GPT2-Small as an example. We assume that the working dire
 The format of training, validation, and test files looks like below:
 
 ```
-[input 1]||[chain-of-thought 1] #### [output 1]
-[input 2]||[chain-of-thought 2] #### [output 3]
-[input 3]||[chain-of-thought 2] #### [output 3]
+[input 1a] , [input 1b]||[chain-of-thought 1a] , [chain-of-thought 1b] #### [output 1a] , #### [output 1b] 
+[input 2a] , [input 2b]||[chain-of-thought 2a] , [chain-of-thought 2b] #### [output 2a] , #### [output 2b]
+[input 3a] , [input 3b]||[chain-of-thought 3a] , [chain-of-thought 3b] #### [output 3a] , #### [output 3b] 
 ...
 ```
 
 As an example, let's take a look at the first line from the 4 X 4 Mult test set in [data/4_by_4_mult/test_bigbench.txt](data/4_by_4_mult/test_bigbench.txt):
 
 ```
-9 1 7 3 * 9 4 3 3||1 7 4 3 3 + 0 6 7 8 4 1 ( 1 3 2 2 8 1 ) + 0 0 7 5 1 1 1 ( 1 3 9 7 9 2 1 ) + 0 0 0 7 5 1 1 1 #### 1 3 9 4 5 4 2 1
+5 6 3 2 * 7 4 3 4 , 7 1 0 8 * 8 4 8 2 <|endoftext|> 5 5 5 6 1 + 0 0 6 4 9 0 ( 5 5 1 1 1 1 ) + 0 0 5 9 0 7 0 ( 5 5 6 0 2 8 0 ) + 0 0 0 0 6 4 9 0 , 5 3 2 3 4 + 0 4 9 2 7 1 ( 5 7 1 6 1 2 ) + 0 0 8 8 5 4 3 ( 5 7 9 4 7 6 3 ) + 0 0 0 6 7 1 9 6 <|endoftext|> #### 5 5 6 0 8 2 0 1 , #### 5 7 9 0 5 8 2 7 <|endoftext|>
 ```
-
-In this example, the input is `9 1 7 3 * 9 4 3 3` (corresponding to `3719*3349`), the chain-of-thought is `1 7 4 3 3 + 0 6 7 8 4 1 ( 1 3 2 2 8 1 ) + 0 0 7 5 1 1 1 ( 1 3 9 7 9 2 1 ) + 0 0 0 7 5 1 1 1`, and the output is `1 3 9 4 5 4 2 1` (corresponding to `12454931`).
 
 Note that for Teacher Training, (a) Mind-Reading the Teacher, and (b) Thought Emulation, the chain-of-thought steps are used; but for (c) Couple and Optimize the chain-of-thought steps are not used.
 
 ### Training
+
+#### Training Notebook
+
+All the three training steps are given sequentially in the notebook:
+
+```
+src\implicit_cot.ipynb
+```
 
 #### Prerequisite: Teacher Training
 
@@ -52,9 +56,9 @@ Our approach is based on distilling a teacher models horizontal reasoning proces
 ```
 export FOLDER=data/4_by_4_mult
 export MODEL=gpt2
-export EPOCHS=1
+export EPOCHS=2
 export LR=5e-5
-export BSZ=32
+export BSZ=8
 export SAVE=train_models/4_by_4_mult/gpt2/teacher
 echo $SAVE
 mkdir -p $SAVE
@@ -71,15 +75,15 @@ TOKENIZERS_PARALLELISM=false CUDA_VISIBLE_DEVICES=0 stdbuf -oL -eL python src/tr
 
 #### (a) Mind-Reading the Teacher
 
-![](imgs/training_illustration_a.png)
+![](imgs/challenge_training_a.PNG)
 
 ```
 export FOLDER=data/4_by_4_mult
 export DELTA=dynamic
 export MODEL=gpt2
-export EPOCHS=40
+export EPOCHS=10
 export LR=5e-5
-export BSZ=32
+export BSZ=8
 export TEACHER=train_models/4_by_4_mult/gpt2/teacher/checkpoint_0
 export SAVE=train_models/4_by_4_mult/gpt2/student_initial
 mkdir -p $SAVE
@@ -98,15 +102,15 @@ TOKENIZERS_PARALLELISM=false CUDA_VISIBLE_DEVICES=0 stdbuf -oL -eL python src/tr
 
 #### (b) Thought Emulation
 
-![](imgs/training_illustration_b.png)
+![](imgs/challenge_training_b.PNG)
 
 ```
 export FOLDER=data/4_by_4_mult
 export DELTA=dynamic
 export MODEL=gpt2
-export EPOCHS=40
+export EPOCHS=10
 export LR=5e-5
-export BSZ=32
+export BSZ=8
 export MIXTURE_SIZE=1
 export TEACHER=train_models/4_by_4_mult/gpt2/teacher/checkpoint_0
 export SAVE=train_models/4_by_4_mult/gpt2/emulator_initial
@@ -127,13 +131,13 @@ TOKENIZERS_PARALLELISM=false CUDA_VISIBLE_DEVICES=0 stdbuf -oL -eL python src/tr
 
 #### (c) Couple and Optimize
 
-![](imgs/training_illustration_c.png)
+![](imgs/challenge_training_c.PNG)
 
 ```
 export FOLDER=data/4_by_4_mult
-export EPOCHS=40
+export EPOCHS=10
 export LR=5e-5
-export BSZ=32
+export BSZ=8
 export STUDENT=train_models/4_by_4_mult/gpt2/student_initial/checkpoint_6
 export EMULATOR=train_models/4_by_4_mult/gpt2/emulator_initial/checkpoint_5
 export SAVE=train_models/4_by_4_mult/gpt2/
